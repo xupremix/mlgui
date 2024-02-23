@@ -21,8 +21,8 @@ fltk::widget_extends!(MainView, Window, window);
 impl MainView {
     pub(crate) fn new(evt_sender: Sender<AppEvent>) -> Self {
         let window = Window::new(0, MENU_BAR_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, None);
-        let editor_view = EditorView::new(evt_sender);
         let training_view = TrainingView::new(evt_sender);
+        let editor_view = EditorView::new(evt_sender);
         window.end();
         Self {
             window,

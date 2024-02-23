@@ -8,8 +8,6 @@ use crate::settings::{AppEvent, AppMode, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WID
 
 mod mainview;
 mod menubar;
-mod rightview;
-mod treeview;
 
 pub(crate) struct Application {
     pub(crate) mode: AppMode,
