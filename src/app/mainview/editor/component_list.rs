@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use fltk::app::Sender;
 use fltk::button::Button;
 use fltk::enums::{Color, Cursor, Event, FrameType};
@@ -27,19 +25,18 @@ impl ComponentList {
         let mut btn = Button::new(0, 0, 80, 40, "Editor").center_of(&group);
         window.end();
 
-        let enabled = RefCell::new(false);
-        let threshold = RefCell::new(200);
-
+        let mut enabled = false;
+        let mut threshold = 200;
         window.handle(move |window, event| match event {
             Event::Push => {
                 let coords = fltk::app::event_coords();
-                enabled.replace(coords.0 + window.x() > *threshold.borrow());
+                enabled = coords.0 + window.x() > threshold;
                 true
             }
             Event::Drag => {
                 let coords = fltk::app::event_coords();
-                if *enabled.borrow() {
-                    threshold.replace(coords.0 - 4);
+                if enabled {
+                    threshold = coords.0 - 4;
                     window.resize(0, 0, coords.0 + window.x(), WINDOW_HEIGHT - MENU_BAR_HEIGHT);
                     group.resize(0, 0, coords.0 - 2, WINDOW_HEIGHT - MENU_BAR_HEIGHT);
                     let diff = coords.0 - window.x();
@@ -53,7 +50,7 @@ impl ComponentList {
             }
             Event::Move => {
                 let coords = fltk::app::event_coords();
-                if coords.0 > *threshold.borrow() + window.x() {
+                if coords.0 > threshold + window.x() {
                     fltk::draw::set_cursor(Cursor::E);
                 } else {
                     fltk::draw::set_cursor(Cursor::Default);
