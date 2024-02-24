@@ -26,9 +26,9 @@ impl AppMenuBar {
         menu_bar.set_color(MENU_BAR_COLOR);
         menu_bar.set_frame(FrameType::BorderFrame);
         SysMenuBar::set_window_menu_style(WindowMenuStyle::TabbingModePreferred);
-        let editor = AppMenuBar::editor(&mut menu_bar, evt_sender);
-        let training = AppMenuBar::training(&mut menu_bar, evt_sender);
-        let settings = AppMenuBar::settings(&mut menu_bar, evt_sender);
+        let editor = AppMenuBar::editor(&mut menu_bar, evt_sender.clone());
+        let training = AppMenuBar::training(&mut menu_bar, evt_sender.clone());
+        let settings = AppMenuBar::settings(&mut menu_bar, evt_sender.clone());
         let help = AppMenuBar::help(&mut menu_bar, evt_sender);
         Self {
             window,

@@ -25,8 +25,8 @@ impl Application {
         let mut window =
             Window::new(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE).center_screen();
         let (evt_sender, evt_recv) = fltk::app::channel();
-        let menu_bar = AppMenuBar::new(evt_sender);
-        let main_view = MainView::new(evt_sender);
+        let menu_bar = AppMenuBar::new(evt_sender.clone());
+        let main_view = MainView::new(evt_sender.clone());
         window.end();
         window.show();
         Application {
@@ -46,28 +46,30 @@ impl Application {
                     AppEvent::Editor => {
                         if self.mode != AppMode::Editor {
                             self.mode = AppMode::Editor;
-                        } else {
-                            continue;
+                            self.main_view.redraw_mode(self.mode);
+                            self.menu_bar.redraw_mode(self.mode);
                         }
                     }
                     AppEvent::Training => {
                         if self.mode != AppMode::Training {
                             self.mode = AppMode::Training;
-                        } else {
-                            continue;
+                            self.main_view.redraw_mode(self.mode);
+                            self.menu_bar.redraw_mode(self.mode);
                         }
                     }
                     AppEvent::Settings => {
                         eprintln!("Showing settings");
-                        continue;
                     }
                     AppEvent::Help => {
                         eprintln!("Showing help");
-                        continue;
+                    }
+                    AppEvent::AddLayer(layer) => {
+                        self.main_view.add_layer(layer);
+                    }
+                    AppEvent::AddActivationFunction(actv_fn) => {
+                        self.main_view.add_activation_fn(actv_fn);
                     }
                 }
-                self.menu_bar.redraw_mode(self.mode);
-                self.main_view.redraw_mode(self.mode);
             }
         }
     }

@@ -1,7 +1,7 @@
 use crate::app::Application;
 
 mod app;
-mod components;
+pub(crate) mod components;
 mod settings;
 
 fn main() {
