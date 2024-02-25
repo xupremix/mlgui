@@ -2,9 +2,10 @@ use crate::app::Application;
 
 mod app;
 pub(crate) mod components;
-mod settings;
+mod utils;
 
 fn main() {
-    let app = Application::new();
-    app.run();
+    // Application::new(1080, 720).run();
+    // Application::new(1920, 1440).run();
+    Application::default().run();
 }

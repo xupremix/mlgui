@@ -4,7 +4,9 @@ use fltk::window::Window;
 
 use crate::app::mainview::editor::EditorView;
 use crate::app::mainview::training::TrainingView;
-use crate::settings::{AppEvent, AppMode, MENU_BAR_HEIGHT, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::utils::{
+    AppEvent, AppMode,
+};
 
 mod editor;
 mod training;
@@ -18,10 +20,17 @@ pub(crate) struct MainView {
 fltk::widget_extends!(MainView, Window, window);
 
 impl MainView {
-    pub(crate) fn new(evt_sender: Sender<AppEvent>) -> Self {
-        let window = Window::new(0, MENU_BAR_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, None);
-        let training_view = TrainingView::new(evt_sender.clone());
-        let editor_view = EditorView::new(evt_sender);
+    pub(crate) fn new(
+        evt_sender: Sender<AppEvent>,
+        p_x: i32,
+        p_y: i32,
+        p_w: i32,
+        p_h: i32,
+    ) -> Self {
+        let window = Window::default().with_pos(p_x, p_y).with_size(p_w, p_h);
+
+        let training_view = TrainingView::new(evt_sender.clone(), p_w, p_h);
+        let editor_view = EditorView::new(evt_sender, p_w, p_h);
         window.end();
         Self {
             window,

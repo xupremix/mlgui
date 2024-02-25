@@ -1,10 +1,10 @@
 use fltk::app::Sender;
-use fltk::enums::{Color, FrameType, Shortcut};
-use fltk::menu::{MenuFlag, SysMenuBar, WindowMenuStyle};
-use fltk::prelude::{GroupExt, MenuExt, WidgetBase, WidgetExt};
+use fltk::enums::{Color, Font, FrameType, Shortcut};
+use fltk::menu::{MenuFlag, MenuItem, SysMenuBar, WindowMenuStyle};
+use fltk::prelude::{GroupExt, MenuExt, WidgetExt};
 use fltk::window::Window;
 
-use crate::settings::{AppEvent, AppMode, MENU_BAR_COLOR, MENU_BAR_HEIGHT, WINDOW_WIDTH};
+use crate::utils::{AppEvent, AppMode, MENU_BAR_COLOR};
 
 pub(crate) struct AppMenuBar {
     window: Window,
@@ -18,13 +18,21 @@ pub(crate) struct AppMenuBar {
 fltk::widget_extends!(AppMenuBar, Window, window);
 
 impl AppMenuBar {
-    pub(crate) fn new(evt_sender: Sender<AppEvent>) -> Self {
-        let mut window = Window::new(0, 0, WINDOW_WIDTH, MENU_BAR_HEIGHT, None);
+    pub(crate) fn new(
+        evt_sender: Sender<AppEvent>,
+        p_x: i32,
+        p_y: i32,
+        p_w: i32,
+        p_h: i32,
+    ) -> Self {
+        let mut window = Window::default().with_pos(p_x, p_y).with_size(p_w, p_h);
         window.set_color(MENU_BAR_COLOR);
-        let mut menu_bar = SysMenuBar::default().with_size(WINDOW_WIDTH, MENU_BAR_HEIGHT);
-        window.end();
+
+        let mut menu_bar = SysMenuBar::default().with_size(p_w, p_h);
         menu_bar.set_color(MENU_BAR_COLOR);
         menu_bar.set_frame(FrameType::BorderFrame);
+
+        window.end();
         SysMenuBar::set_window_menu_style(WindowMenuStyle::TabbingModePreferred);
         let editor = AppMenuBar::editor(&mut menu_bar, evt_sender.clone());
         let training = AppMenuBar::training(&mut menu_bar, evt_sender.clone());
@@ -47,8 +55,7 @@ impl AppMenuBar {
             evt_sender,
             AppEvent::Editor,
         );
-        let mut editor_widget = menu_bar.at(editor).unwrap();
-        editor_widget.set_label_color(Color::White);
+        apply_style(&mut menu_bar.at(editor).unwrap());
         editor
     }
     fn training(menu_bar: &mut SysMenuBar, evt_sender: Sender<AppEvent>) -> i32 {
@@ -59,8 +66,7 @@ impl AppMenuBar {
             evt_sender,
             AppEvent::Training,
         );
-        let mut training_widget = menu_bar.at(training).unwrap();
-        training_widget.set_label_color(Color::White);
+        apply_style(&mut menu_bar.at(training).unwrap());
         training
     }
     fn settings(menu_bar: &mut SysMenuBar, evt_sender: Sender<AppEvent>) -> i32 {
@@ -71,8 +77,7 @@ impl AppMenuBar {
             evt_sender,
             AppEvent::Settings,
         );
-        let mut training_widget = menu_bar.at(settings).unwrap();
-        training_widget.set_label_color(Color::White);
+        apply_style(&mut menu_bar.at(settings).unwrap());
         settings
     }
     fn help(menu_bar: &mut SysMenuBar, evt_sender: Sender<AppEvent>) -> i32 {
@@ -83,8 +88,7 @@ impl AppMenuBar {
             evt_sender,
             AppEvent::Help,
         );
-        let mut training_widget = menu_bar.at(help).unwrap();
-        training_widget.set_label_color(Color::White);
+        apply_style(&mut menu_bar.at(help).unwrap());
         help
     }
     pub(crate) fn redraw_mode(&mut self, mode: AppMode) {
@@ -104,4 +108,9 @@ impl AppMenuBar {
         }
         self.redraw();
     }
+}
+
+fn apply_style(item: &mut MenuItem) {
+    item.set_label_color(Color::White);
+    item.set_label_font(Font::HelveticaBold);
 }

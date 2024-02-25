@@ -5,7 +5,7 @@ use fltk::window::{DoubleWindow, Window};
 
 use crate::app::mainview::editor::component_list::ComponentList;
 use crate::app::mainview::editor::configs::ConfingList;
-use crate::settings::{AppEvent, BG_COLOR, MENU_BAR_HEIGHT, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::utils::{AppEvent, BG_COLOR, COMPONENT_LIST_RATIO, CONFIG_LIST_RATIO};
 
 mod component_list;
 mod configs;
@@ -18,15 +18,26 @@ pub(crate) struct EditorView {
 fltk::widget_extends!(EditorView, Window, window);
 
 impl EditorView {
-    pub(crate) fn new(evt_sender: Sender<AppEvent>) -> Self {
-        let mut window = Window::new(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT - MENU_BAR_HEIGHT, None);
+    pub(crate) fn new(evt_sender: Sender<AppEvent>, p_w: i32, p_h: i32) -> Self {
+        let mut window = Window::default().with_size(p_w, p_h);
         window.set_color(BG_COLOR);
-        // component list
-        ComponentList::new(evt_sender.clone());
-        // graph display
+
         // playground
+
+        // graph display
+
+        // component list
+        ComponentList::new(evt_sender.clone(), p_w / COMPONENT_LIST_RATIO, p_h);
+
         // configs
-        ConfingList::new();
+        ConfingList::new(
+            evt_sender,
+            p_w - p_w / CONFIG_LIST_RATIO,
+            0,
+            p_w / CONFIG_LIST_RATIO,
+            p_h,
+        );
+
         let btn = Button::new(0, 0, 80, 40, "Editor").center_of(&window);
         window.end();
         Self { window }
