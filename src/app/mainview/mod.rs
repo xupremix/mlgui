@@ -15,8 +15,6 @@ pub(crate) struct MainView {
     training_view: TrainingView,
 }
 
-impl MainView {}
-
 fltk::widget_extends!(MainView, Window, window);
 
 impl MainView {

@@ -83,26 +83,23 @@ impl ComponentList {
         window.end();
 
         let mut enabled = false;
-        let mut threshold = 200;
         window.handle(move |window, event| match event {
             Event::Push => {
-                let coords = fltk::app::event_coords();
-                enabled = coords.0 + window.x() > threshold;
+                let x = fltk::app::event_x();
+                enabled = window.w() - x < 4;
                 true
             }
             Event::Drag => {
                 let coords = fltk::app::event_coords();
                 if enabled {
-                    threshold = coords.0 - 4;
                     window.resize(0, 0, coords.0 + window.x(), WINDOW_HEIGHT - MENU_BAR_HEIGHT);
                     group.resize(0, 0, coords.0 - 2, WINDOW_HEIGHT - MENU_BAR_HEIGHT);
-                    let diff = coords.0 - window.x();
                 }
                 true
             }
             Event::Move => {
-                let coords = fltk::app::event_coords();
-                if coords.0 + window.x() > threshold {
+                let x = fltk::app::event_x();
+                if window.w() - x < 4 {
                     fltk::draw::set_cursor(Cursor::E);
                 } else {
                     fltk::draw::set_cursor(Cursor::Default);

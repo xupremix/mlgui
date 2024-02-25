@@ -1,6 +1,5 @@
 use fltk::enums::{Color, Cursor, Event, Font, FrameType};
 use fltk::frame::Frame;
-use fltk::group::Group;
 use fltk::prelude::{GroupExt, WidgetBase};
 use fltk::prelude::WidgetExt;
 use fltk::window::Window;
@@ -25,9 +24,6 @@ impl ConfingList {
         );
         window.set_color(Color::White);
 
-        let mut group = Group::new(0, 0, width, WINDOW_HEIGHT - MENU_BAR_HEIGHT, None);
-        group.set_frame(FrameType::FlatBox);
-
         let mut custom_frame_border = Frame::new(2, 0, 203, 30, None);
         custom_frame_border.set_frame(FrameType::FlatBox);
         custom_frame_border.set_color(Color::White);
@@ -50,26 +46,30 @@ impl ConfingList {
 
         window.end();
 
-        let mut threshold = 4;
+        let mut enabled = false;
         window.handle(move |window, event| match event {
-            Event::Push => true,
+            Event::Push => {
+                enabled = fltk::app::event_x() < 4;
+                true
+            }
             Event::Drag => {
                 let x = fltk::app::event_x();
-                width -= x;
-                if fltk::app::event_x() < threshold {
+                if enabled {
+                    width -= x;
                     window.resize(
                         window.x() + x,
                         window.y(),
                         width,
                         WINDOW_HEIGHT - MENU_BAR_HEIGHT,
                     );
-                    group.resize(0, 0, window.w(), window.h());
+                    frame.resize(2, 1, window.w() - 2, 28);
+                    config_frame.resize(2, 30, window.w() - 2, window.h());
                 }
                 true
             }
             Event::Move => {
                 let x = fltk::app::event_x();
-                if x < threshold {
+                if x < 4 {
                     fltk::draw::set_cursor(Cursor::E);
                 } else {
                     fltk::draw::set_cursor(Cursor::Default);
