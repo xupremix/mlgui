@@ -21,11 +21,14 @@ pub(crate) struct Application {
 impl Application {
     pub(crate) fn new(width: i32, height: i32) -> Application {
         let app = App::default().with_scheme(Scheme::Gtk);
-        let window = Window::new(0, 0, width, height, WINDOW_TITLE).center_screen();
+        let mut window = Window::new(0, 0, width, height, WINDOW_TITLE).center_screen();
         let (evt_sender, evt_recv) = fltk::app::channel();
         let menu_bar = AppMenuBar::new(evt_sender.clone(), 0, 0, width, height / MENU_BAR_RATIO);
         let main_view = MainView::new(evt_sender, 0, menu_bar.h(), width, height - menu_bar.h());
         window.end();
+        window.set_callback(move |_| {
+            app.quit();
+        });
         Application {
             mode: AppMode::Editor,
             app,
