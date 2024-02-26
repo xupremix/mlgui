@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -370,21 +371,25 @@ fn save_path_entry(save: Rc<RefCell<Option<PathBuf>>>, p_w: i32, p_h: i32) -> (F
     save_path_selector.set_frame(FrameType::FlatBox);
     save_path_selector.set_color(BG_COLOR);
     save_path_selector.set_selection_color(HIGHLIGHT_COLOR);
-    save_path_selector.set_callback(move |_| {
+    save_path_selector.set_callback(move |selector| {
         let mut dialog = NativeFileChooser::new(FileDialogType::BrowseSaveFile);
         dialog.show();
         let filename = dialog.filename();
         if filename.ne(&PathBuf::new()) {
+            if let Some(ext) = filename.extension() {
+                if ext.ne(OsStr::new("pt")) {
+                    CustomDialog::show(
+                        300,
+                        40,
+                        "Error",
+                        "Extension must be either empty or .pt",
+                        BG_COLOR,
+                        Color::Red,
+                    );
+                }
+            };
             let file = filename.with_extension("pt");
-            let path = format!("Save path: {:?}", file);
-            CustomDialog::show(
-                path.len() as i32 * 8,
-                40,
-                "Success",
-                path.as_str(),
-                BG_COLOR,
-                Color::Green,
-            );
+            selector.set_label(file.file_name().unwrap().to_str().unwrap());
             save.replace(Some(file));
         } else {
             CustomDialog::show(150, 40, "Error", "No file selected", BG_COLOR, Color::Red);
