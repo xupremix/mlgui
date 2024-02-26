@@ -9,8 +9,8 @@ use fltk::tree::{Tree, TreeItem};
 use fltk::window::Window;
 
 use crate::utils::{
-    ACTIVATION_FUNCTIONS, AppEvent, BG_COLOR, DRAG_THRESHOLD, LAYERS, MENU_BAR_COLOR,
-    MENU_BAR_RATIO,
+    ACTIVATION_FUNCTIONS, AppEvent, BG_COLOR, DRAG_THRESHOLD, HIGHLIGHT_COLOR, LAYERS,
+    MENU_BAR_COLOR, MENU_BAR_RATIO,
 };
 
 pub(crate) struct ComponentList {
@@ -47,7 +47,7 @@ impl ComponentList {
             .with_size(p_w - 2, p_h);
         component_tree.set_color(BG_COLOR);
         component_tree.set_label_color(Color::White);
-        component_tree.set_selection_color(Color::from_hex(0x3E4452));
+        component_tree.set_selection_color(HIGHLIGHT_COLOR);
         component_tree.set_margin_left(-5);
         component_tree.set_show_root(false);
         component_tree.set_line_spacing(10);

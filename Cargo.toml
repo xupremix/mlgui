@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 tch = { path = "../../tch-rs" }
 fltk = { version = "1.4.25", features = ["use-ninja"] }
+pyo3 = { version = "0.20.3", features = ["auto-initialize"] }
