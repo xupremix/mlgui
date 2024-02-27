@@ -15,20 +15,19 @@ use fltk::prelude::{MenuExt, WidgetExt};
 use fltk::window::Window;
 use pyo3::Python;
 use tch::Device;
-use tch::nn::Optimizer;
 use tch::utils::has_vulkan;
 
 use crate::utils::{
-    AppEvent, BG_COLOR, check_mps_availability, CustomDialog, DEVICES, DRAG_THRESHOLD,
-    HIGHLIGHT_COLOR, MENU_BAR_COLOR, MENU_BAR_RATIO,
+    AppEvent, BG_COLOR, check_mps_availability, CustomDialog, DEVICES, DRAG_THRESHOLD, HIGHLIGHT_COLOR,
+    LOSS_FUNCTIONS, LossFunction, LossWidget, MENU_BAR_COLOR, MENU_BAR_RATIO, OPTIMIZERS,
 };
 
 pub(crate) struct ConfingList {
     pub(crate) window: Window,
     pub(crate) save_path: Rc<RefCell<Option<PathBuf>>>,
     pub(crate) device: Rc<RefCell<Option<Device>>>,
-    pub(crate) optimizer: Rc<RefCell<Option<Optimizer>>>,
-    pub(crate) loss_fn: Rc<RefCell<Option<String>>>,
+    pub(crate) optimizer: Rc<RefCell<Option<String>>>,
+    pub(crate) loss_fn: Rc<RefCell<Option<LossFunction>>>,
     pub(crate) lr: Rc<RefCell<Option<f64>>>,
     pub(crate) batch_size: Rc<RefCell<Option<i64>>>,
     pub(crate) epochs: Rc<RefCell<Option<usize>>>,
@@ -81,12 +80,13 @@ impl ConfingList {
         let (device_border, mut device_selector) = device_entry(device.clone(), &border, p_h);
 
         // Optimizer
-        let optimizer: Rc<RefCell<Option<Optimizer>>> = Rc::new(RefCell::new(None));
-        let optimizer_border = optimizer_entry(optimizer.clone(), &device_border, p_h);
+        let optimizer: Rc<RefCell<Option<String>>> = Rc::new(RefCell::new(None));
+        let (optimizer_border, mut optimizer_selector) =
+            optimizer_entry(optimizer.clone(), &device_border, p_h);
 
         // Loss Function
         let loss_fn = Rc::new(RefCell::new(None));
-        let loss_border = loss_entry(loss_fn.clone(), &optimizer_border, p_h);
+        let (loss_border, mut loss_selector) = loss_entry(loss_fn.clone(), &optimizer_border, p_h);
 
         // Learning Rate
         let lr = Rc::new(RefCell::new(None));
@@ -129,6 +129,18 @@ impl ConfingList {
                     save_btn.w(),
                     device_selector.h(),
                 );
+                optimizer_selector.resize(
+                    device_selector.x(),
+                    optimizer_selector.y(),
+                    device_selector.w(),
+                    optimizer_selector.h(),
+                );
+                loss_selector.resize(
+                    optimizer_selector.x(),
+                    loss_selector.y(),
+                    optimizer_selector.w(),
+                    loss_selector.h(),
+                );
                 true
             }
             Event::Move => {
@@ -167,7 +179,7 @@ fn epoch_entry(epochs: Rc<RefCell<Option<usize>>>, batch_border: &Frame, p_h: i3
     epoch_border.set_frame(FrameType::FlatBox);
     let mut epochs_text = Frame::default()
         .with_pos(epoch_border.x(), epoch_border.y() + 1)
-        .with_size(epoch_border.w(), epoch_border.h() - 2)
+        .with_size(epoch_border.w() / 2, epoch_border.h() - 2)
         .with_label("Epochs: ")
         .with_align(Align::Inside | Align::Left);
     epochs_text.set_label_color(Color::White);
@@ -185,7 +197,7 @@ fn batch_entry(batch_size: Rc<RefCell<Option<i64>>>, lr_border: &Frame, p_h: i32
     batch_border.set_frame(FrameType::FlatBox);
     let mut batch_text = Frame::default()
         .with_pos(batch_border.x(), batch_border.y() + 1)
-        .with_size(batch_border.w(), batch_border.h() - 2)
+        .with_size(batch_border.w() / 2, batch_border.h() - 2)
         .with_label("Batch Size: ")
         .with_align(Align::Inside | Align::Left);
     batch_text.set_label_color(Color::White);
@@ -203,7 +215,7 @@ fn lr_entry(lr: Rc<RefCell<Option<f64>>>, loss_border: &Frame, p_h: i32) -> Fram
     lr_border.set_frame(FrameType::FlatBox);
     let mut lr_text = Frame::default()
         .with_pos(lr_border.x(), lr_border.y() + 1)
-        .with_size(lr_border.w(), lr_border.h() - 2)
+        .with_size(lr_border.w() / 2, lr_border.h() - 2)
         .with_label("Learning Rate: ")
         .with_align(Align::Inside | Align::Left);
     lr_text.set_label_color(Color::White);
@@ -213,7 +225,11 @@ fn lr_entry(lr: Rc<RefCell<Option<f64>>>, loss_border: &Frame, p_h: i32) -> Fram
     lr_border
 }
 
-fn loss_entry(loss: Rc<RefCell<Option<String>>>, device_border: &Frame, p_h: i32) -> Frame {
+fn loss_entry(
+    loss: Rc<RefCell<Option<LossFunction>>>,
+    device_border: &Frame,
+    p_h: i32,
+) -> (Frame, Choice) {
     let mut loss_border = Frame::default()
         .with_pos(device_border.x(), device_border.y() + p_h / MENU_BAR_RATIO)
         .with_size(device_border.w(), device_border.h());
@@ -221,21 +237,49 @@ fn loss_entry(loss: Rc<RefCell<Option<String>>>, device_border: &Frame, p_h: i32
     loss_border.set_frame(FrameType::FlatBox);
     let mut loss_text = Frame::default()
         .with_pos(loss_border.x(), loss_border.y() + 1)
-        .with_size(loss_border.w(), loss_border.h() - 2)
+        .with_size(loss_border.w() / 2, loss_border.h() - 2)
         .with_label("Loss Function: ")
         .with_align(Align::Inside | Align::Left);
     loss_text.set_label_color(Color::White);
     loss_text.set_frame(FrameType::FlatBox);
     loss_text.set_color(BG_COLOR);
     // Handle events
-    loss_border
+    let mut loss_selector = Choice::default()
+        .with_pos(loss_text.w() + 4, loss_text.y())
+        .with_size(loss_text.w() - 5, device_border.h() - 2)
+        .with_label("Select loss fn:");
+    loss_selector.set_align(Align::Inside | Align::Center);
+    loss_selector.set_label_color(Color::White);
+    loss_selector.set_frame(FrameType::FlatBox);
+    loss_selector.set_color(BG_COLOR);
+    loss_selector.set_selection_color(HIGHLIGHT_COLOR);
+    for loss_name in LOSS_FUNCTIONS.iter() {
+        let i = loss_selector.add_choice(loss_name);
+        let mut entry = loss_selector.at(i).unwrap();
+        entry.set_label_color(Color::White);
+    }
+    loss_selector.set_callback(move |selector| {
+        let value = selector.value();
+        selector.set_value(-1);
+        match LossWidget::show(value) {
+            None => {
+                selector.set_label("Select loss fn:");
+            }
+            Some(loss_fn) => {
+                let name = selector.at(value).unwrap().label().unwrap().to_string();
+                selector.set_label(name.as_str());
+                loss.replace(Some(loss_fn));
+            }
+        }
+    });
+    (loss_border, loss_selector)
 }
 
 fn optimizer_entry(
-    optimizer: Rc<RefCell<Option<Optimizer>>>,
+    optimizer: Rc<RefCell<Option<String>>>,
     device_border: &Frame,
     p_h: i32,
-) -> Frame {
+) -> (Frame, Choice) {
     let mut optimizer_border = Frame::default()
         .with_pos(device_border.x(), device_border.y() + p_h / MENU_BAR_RATIO)
         .with_size(device_border.w(), device_border.h());
@@ -243,14 +287,35 @@ fn optimizer_entry(
     optimizer_border.set_frame(FrameType::FlatBox);
     let mut optimizer_text = Frame::default()
         .with_pos(optimizer_border.x(), optimizer_border.y() + 1)
-        .with_size(optimizer_border.w(), optimizer_border.h() - 2)
+        .with_size(optimizer_border.w() / 2, optimizer_border.h() - 2)
         .with_label("Optimizer: ")
         .with_align(Align::Inside | Align::Left);
     optimizer_text.set_label_color(Color::White);
     optimizer_text.set_frame(FrameType::FlatBox);
     optimizer_text.set_color(BG_COLOR);
     // Handle events
-    optimizer_border
+    let mut optimizer_selector = Choice::default()
+        .with_pos(optimizer_text.w() + 4, optimizer_text.y())
+        .with_size(optimizer_text.w() - 5, device_border.h() - 2)
+        .with_label("Select optimizer:");
+    optimizer_selector.set_align(Align::Inside | Align::Center);
+    optimizer_selector.set_label_color(Color::White);
+    optimizer_selector.set_frame(FrameType::FlatBox);
+    optimizer_selector.set_color(BG_COLOR);
+    optimizer_selector.set_selection_color(HIGHLIGHT_COLOR);
+    for optimizer_name in OPTIMIZERS.iter() {
+        let i = optimizer_selector.add_choice(optimizer_name);
+        let mut entry = optimizer_selector.at(i).unwrap();
+        entry.set_label_color(Color::White);
+    }
+    optimizer_selector.set_callback(move |selector| {
+        let value = selector.value();
+        selector.set_value(-1);
+        let name = selector.at(value).unwrap().label().unwrap().to_string();
+        selector.set_label(name.as_str());
+        optimizer.replace(Some(name));
+    });
+    (optimizer_border, optimizer_selector)
 }
 
 fn device_entry(device: Rc<RefCell<Option<Device>>>, border: &Frame, p_h: i32) -> (Frame, Choice) {
@@ -386,11 +451,16 @@ fn save_path_entry(save: Rc<RefCell<Option<PathBuf>>>, p_w: i32, p_h: i32) -> (F
                         BG_COLOR,
                         Color::Red,
                     );
+                } else {
+                    let file = filename.with_extension("pt");
+                    selector.set_label(file.file_name().unwrap().to_str().unwrap());
+                    save.replace(Some(file));
                 }
+            } else {
+                let file = filename.with_extension("pt");
+                selector.set_label(file.file_name().unwrap().to_str().unwrap());
+                save.replace(Some(file));
             };
-            let file = filename.with_extension("pt");
-            selector.set_label(file.file_name().unwrap().to_str().unwrap());
-            save.replace(Some(file));
         } else {
             CustomDialog::show(150, 40, "Error", "No file selected", BG_COLOR, Color::Red);
         }
