@@ -1,7 +1,12 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use fltk::button::ToggleButton;
 use fltk::enums::{Align, Color, Event, FrameType};
 use fltk::frame::Frame;
+use fltk::input::{FloatInput, Input, IntInput};
 use fltk::menu::Choice;
-use fltk::prelude::{GroupExt, MenuExt, WidgetBase, WidgetExt, WindowExt};
+use fltk::prelude::{ButtonExt, GroupExt, InputExt, MenuExt, WidgetBase, WidgetExt, WindowExt};
 use fltk::window::Window;
 use pyo3::Python;
 use tch::{Device, Reduction};
@@ -112,146 +117,260 @@ pub(crate) fn check_mps_availability(py: Python) -> Result<Device, String> {
 const LOSS_WINDOW_WIDTH: i32 = 400;
 const LOSS_WINDOW_HEIGHT: i32 = 400;
 impl LossWidget {
-    pub(crate) fn show(loss_fn_i: i32) -> Option<LossFunction> {
+    pub(crate) fn show(loss_fn_i: i32, title: &str, loss: Rc<RefCell<Option<LossFunction>>>) {
         let mut window = Window::default()
             .with_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT)
+            .with_label(title)
             .center_screen();
+        window.set_label_color(Color::White);
         window.set_color(BG_COLOR);
         window.set_frame(FrameType::FlatBox);
         match LOSS_FUNCTIONS[loss_fn_i as usize] {
             "MSE" => {
+                window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
+                // reduction parameter
+                let reduction = Self::reduction_parameter();
+
+                // show the window
+                window.end();
+                window.show();
+                window.set_callback(move |window| {
+                    window.hide();
+                    let reduction = match reduction.label().as_str() {
+                        "Select reduction" => {
+                            CustomDialog::show(
+                                200,
+                                40,
+                                "Error",
+                                "Please select a reduction",
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                        "Sum" => Reduction::Sum,
+                        "Mean" => Reduction::Mean,
+                        _ => unreachable!(),
+                    };
+                    loss.replace(Some(LossFunction::Mse { reduction }));
+                });
+            }
+            "CrossEntropy" => {
                 window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 2);
                 // reduction parameter
                 let reduction = Self::reduction_parameter();
-                // confirm button
-                let confirm = Self::confirm(1);
-
-                // show the window
-                window.end();
-                window.show();
-            }
-            "CrossEntropy" => {
-                // reduction parameter
-                Self::reduction_parameter();
                 // smoothing parameter
-                Self::smoothing_parameter();
-                // weight tensor
-                Self::weight_parameter();
-                // confirm button
-                Self::confirm(3);
+                let smoothing = Self::smoothing_delta_parameter("Smoothing: ");
 
                 // show the window
                 window.end();
                 window.show();
+                window.set_callback(move |window| {
+                    window.hide();
+                    let reduction = match reduction.label().as_str() {
+                        "Select reduction" => {
+                            CustomDialog::show(
+                                200,
+                                40,
+                                "Error",
+                                "Please select a reduction",
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                        "Sum" => Reduction::Sum,
+                        "Mean" => Reduction::Mean,
+                        _ => unreachable!(),
+                    };
+                    let smoothing = match smoothing.value().parse::<f64>() {
+                        Ok(value) => value,
+                        Err(e) => {
+                            CustomDialog::show(
+                                350,
+                                60,
+                                "Error",
+                                &format!("Error parsing smoothing: \n{}", e),
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                    };
+                    loss.replace(Some(LossFunction::CrossEntropy {
+                        reduction,
+                        smoothing,
+                    }));
+                });
             }
             "BCE" => {
-                window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4 * 3);
+                window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
                 // reduction parameter
-                Self::reduction_parameter();
-                // weight tensor
-                Self::weight_parameter();
-                // confirm button
-                Self::confirm(2);
+                let reduction = Self::reduction_parameter();
 
                 // show the window
                 window.end();
                 window.show();
+                window.set_callback(move |window| {
+                    window.hide();
+                    let reduction = match reduction.label().as_str() {
+                        "Select reduction" => {
+                            CustomDialog::show(
+                                200,
+                                40,
+                                "Error",
+                                "Please select a reduction",
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                        "Sum" => Reduction::Sum,
+                        "Mean" => Reduction::Mean,
+                        _ => unreachable!(),
+                    };
+                    loss.replace(Some(LossFunction::Bce { reduction }));
+                });
             }
             "NLL" => {
                 // no parameters
+                loss.replace(Some(LossFunction::Nll));
             }
             "CTC" => {
-                // reduction parameter
-                Self::reduction_parameter();
-                // blank parameter
-                Self::blank_parameter();
-                // zero_infinity parameter
-                Self::zero_infinity_parameter();
-                // confirm button
-                Self::confirm(3);
-
-                // show the window
-                window.end();
-                window.show();
-            }
-            "Huber" => {
                 window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4 * 3);
                 // reduction parameter
-                Self::reduction_parameter();
-                // delta parameter
-                Self::delta_parameter();
-                // confirm button
-                Self::confirm(2);
+                let reduction = Self::reduction_parameter();
+                // blank parameter
+                let blank = Self::blank_parameter();
+                // zero_infinity parameter
+                let zero_infinity = Self::zero_infinity_parameter();
 
                 // show the window
                 window.end();
                 window.show();
+                window.set_callback(move |window| {
+                    window.hide();
+                    let reduction = match reduction.label().as_str() {
+                        "Select reduction" => {
+                            CustomDialog::show(
+                                200,
+                                40,
+                                "Error",
+                                "Please select a reduction",
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                        "Sum" => Reduction::Sum,
+                        "Mean" => Reduction::Mean,
+                        _ => unreachable!(),
+                    };
+                    let blank = match blank.value().parse::<i64>() {
+                        Ok(value) => value,
+                        Err(e) => {
+                            CustomDialog::show(
+                                350,
+                                60,
+                                "Error",
+                                &format!("Error parsing blank: \n{}", e),
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                    };
+                    loss.replace(Some(LossFunction::Ctc {
+                        reduction,
+                        blank,
+                        zero_infinity: zero_infinity.is_set(),
+                    }));
+                });
             }
-            "L1" => {
+            "Huber" => {
                 window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 2);
                 // reduction parameter
                 let reduction = Self::reduction_parameter();
-                // confirm button
-                let confirm = Self::confirm(1);
+                // delta parameter
+                let delta = Self::smoothing_delta_parameter("Delta: ");
 
                 // show the window
                 window.end();
                 window.show();
-                window.handle(move |window, evt| match evt {
-                    Event::Push => {
-                        if fltk::app::event_inside(
-                            confirm.x(),
-                            confirm.y(),
-                            confirm.w(),
-                            confirm.h(),
-                        ) {
-                            let loss = match reduction.label().as_str() {
-                                "Select reduction" => {
-                                    CustomDialog::show(
-                                        200,
-                                        40,
-                                        "Error",
-                                        "Please select a reduction",
-                                        BG_COLOR,
-                                        Color::Red,
-                                    );
-                                    None
-                                }
-                                "Sum" => Some(LossFunction::L1 {
-                                    reduction: Reduction::Sum,
-                                }),
-                                "Mean" => Some(LossFunction::L1 {
-                                    reduction: Reduction::Mean,
-                                }),
-                                _ => unreachable!(),
-                            };
-                            window.hide();
-                            // loss
+                window.set_callback(move |window| {
+                    window.hide();
+                    let delta = match delta.value().parse::<f64>() {
+                        Ok(value) => value,
+                        Err(e) => {
+                            CustomDialog::show(
+                                350,
+                                60,
+                                "Error",
+                                &format!("Error parsing delta: \n{}", e),
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
                         }
-                        true
-                    }
-                    _ => false,
-                })
+                    };
+                    let reduction = match reduction.label().as_str() {
+                        "Select reduction" => {
+                            CustomDialog::show(
+                                200,
+                                40,
+                                "Error",
+                                "Please select a reduction",
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                            return;
+                        }
+                        "Sum" => Reduction::Sum,
+                        "Mean" => Reduction::Mean,
+                        _ => unreachable!(),
+                    };
+                    loss.replace(Some(LossFunction::Huber { reduction, delta }));
+                });
+            }
+            "L1" => {
+                window.set_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
+                // reduction parameter
+                let reduction = Self::reduction_parameter();
+                // show the window
+                window.end();
+                window.show();
+                window.set_callback(move |window| {
+                    window.hide();
+                    match reduction.label().as_str() {
+                        "Select reduction" => {
+                            CustomDialog::show(
+                                200,
+                                40,
+                                "Error",
+                                "Please select a reduction",
+                                BG_COLOR,
+                                Color::Red,
+                            );
+                        }
+                        "Sum" => {
+                            loss.replace(Some(LossFunction::L1 {
+                                reduction: Reduction::Sum,
+                            }));
+                        }
+                        "Mean" => {
+                            loss.replace(Some(LossFunction::L1 {
+                                reduction: Reduction::Mean,
+                            }));
+                        }
+                        _ => unreachable!(),
+                    };
+                });
             }
             _ => unreachable!(),
         }
-        Some(LossFunction::Nll)
-        // None
-    }
-    fn confirm(i: i32) -> Frame {
-        let mut border = Frame::default()
-            .with_pos(LOSS_WINDOW_WIDTH / 3, i * LOSS_WINDOW_HEIGHT / 4)
-            .with_size(LOSS_WINDOW_WIDTH / 3, LOSS_WINDOW_HEIGHT / 4);
-        border.set_color(Color::White);
-        border.set_frame(FrameType::FlatBox);
-        let mut out = Frame::default()
-            .with_pos(border.x() + 1, border.y() + 1)
-            .with_size(border.w() - 2, border.h() - 2)
-            .with_label("Confirm");
-        out.set_label_color(Color::White);
-        out.set_frame(FrameType::BorderBox);
-        out.set_color(BG_COLOR);
-        out
+        while window.shown() {
+            fltk::app::wait();
+        }
     }
     fn reduction_parameter() -> Choice {
         let mut border = Frame::default()
@@ -290,12 +409,127 @@ impl LossWidget {
         });
         choice
     }
-    fn smoothing_parameter() {}
-    fn blank_parameter() {}
-    fn zero_infinity_parameter() {}
-    fn weight_parameter() {}
-    fn delta_parameter() {}
+    fn smoothing_delta_parameter(name: &str) -> FloatInput {
+        let mut border = Frame::default()
+            .with_pos(0, LOSS_WINDOW_HEIGHT / 4)
+            .with_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
+        border.set_color(Color::White);
+        border.set_frame(FrameType::FlatBox);
+        let mut text = Frame::default()
+            .with_pos(border.x() + 2, border.y() + 2)
+            .with_size(border.w() / 2 - 4, border.h() - 4)
+            .with_label(name);
+        text.set_label_color(Color::White);
+        text.set_frame(FrameType::FlatBox);
+        text.set_color(BG_COLOR);
+
+        let mut input = FloatInput::default()
+            .with_pos(LOSS_WINDOW_WIDTH / 2 + 2, text.y())
+            .with_size(text.w(), text.h());
+        input.set_color(BG_COLOR);
+        input.set_frame(FrameType::FlatBox);
+        input.set_selection_color(HIGHLIGHT_COLOR);
+        input.set_value("0.0");
+        input.set_cursor_color(Color::White);
+        input.set_text_color(Color::White);
+
+        input
+    }
+    fn blank_parameter() -> IntInput {
+        let mut border = Frame::default()
+            .with_pos(0, LOSS_WINDOW_HEIGHT / 4)
+            .with_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
+        border.set_color(Color::White);
+        border.set_frame(FrameType::FlatBox);
+        let mut text = Frame::default()
+            .with_pos(border.x() + 2, border.y() + 2)
+            .with_size(border.w() / 2 - 4, border.h() - 4)
+            .with_label("Blank: ");
+        text.set_label_color(Color::White);
+        text.set_frame(FrameType::FlatBox);
+        text.set_color(BG_COLOR);
+
+        let mut input = IntInput::default()
+            .with_pos(LOSS_WINDOW_WIDTH / 2 + 2, text.y())
+            .with_size(text.w(), text.h());
+        input.set_color(BG_COLOR);
+        input.set_frame(FrameType::FlatBox);
+        input.set_selection_color(HIGHLIGHT_COLOR);
+        input.set_value("0");
+        input.set_cursor_color(Color::White);
+        input.set_text_color(Color::White);
+
+        input
+    }
+    fn zero_infinity_parameter() -> ToggleButton {
+        let mut border = Frame::default()
+            .with_pos(0, LOSS_WINDOW_HEIGHT / 2)
+            .with_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
+        border.set_color(Color::White);
+        border.set_frame(FrameType::FlatBox);
+        let mut text = Frame::default()
+            .with_pos(border.x() + 2, border.y() + 2)
+            .with_size(border.w() / 2 - 4, border.h() - 4)
+            .with_label("Zero - Infinity: ");
+        text.set_label_color(Color::White);
+        text.set_frame(FrameType::FlatBox);
+        text.set_color(BG_COLOR);
+
+        let mut input = ToggleButton::default()
+            .with_pos(LOSS_WINDOW_WIDTH / 2 + 2, text.y())
+            .with_size(text.w(), text.h())
+            .with_label("✖️");
+
+        input.set_color(BG_COLOR);
+        input.set_frame(FrameType::FlatBox);
+        input.set_selection_color(HIGHLIGHT_COLOR);
+
+        input.set_callback(move |btn| {
+            btn.set_label(if btn.is_set() { "✔️" } else { "✖️" });
+        });
+
+        input
+    }
+    fn weight_parameter(i: i32) -> Input {
+        let mut border = Frame::default()
+            .with_pos(0, i * LOSS_WINDOW_HEIGHT / 4)
+            .with_size(LOSS_WINDOW_WIDTH, LOSS_WINDOW_HEIGHT / 4);
+        border.set_color(Color::White);
+        border.set_frame(FrameType::FlatBox);
+        let mut text = Frame::default()
+            .with_pos(border.x() + 2, border.y() + 2)
+            .with_size(border.w() / 2 - 4, border.h() - 4)
+            .with_label("Weights: ");
+        text.set_label_color(Color::White);
+        text.set_frame(FrameType::FlatBox);
+        text.set_color(BG_COLOR);
+
+        let mut input = Input::default()
+            .with_pos(LOSS_WINDOW_WIDTH / 2 + 2, text.y())
+            .with_size(text.w(), text.h());
+        input.set_value("Eg: 0.1, 0.9, 0.0");
+        input.set_align(Align::Inside | Align::Center);
+        input.set_color(BG_COLOR);
+        input.set_frame(FrameType::FlatBox);
+        input.set_cursor_color(Color::White);
+        input.set_selection_color(HIGHLIGHT_COLOR);
+        input.set_text_color(Color::White);
+
+        input.handle(move |input, evt| {
+            let mut set = false;
+            match evt {
+                Event::Push if !set => {
+                    set = true;
+                    input.set_value("");
+                    true
+                }
+                _ => false,
+            }
+        });
+        input
+    }
 }
+
 #[derive(Debug, Clone)]
 pub(crate) enum LossFunction {
     Mse {
@@ -304,11 +538,9 @@ pub(crate) enum LossFunction {
     CrossEntropy {
         reduction: Reduction,
         smoothing: f64,
-        weight: Option<Vec<f64>>,
     },
     Bce {
         reduction: Reduction,
-        weight: Option<Vec<f64>>,
     },
     Nll,
     Ctc {

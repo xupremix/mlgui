@@ -260,17 +260,14 @@ fn loss_entry(
     }
     loss_selector.set_callback(move |selector| {
         let value = selector.value();
+        let name = selector.at(value).unwrap().label().unwrap().to_string();
         selector.set_value(-1);
-        match LossWidget::show(value) {
-            None => {
-                selector.set_label("Select loss fn:");
-            }
-            Some(loss_fn) => {
-                let name = selector.at(value).unwrap().label().unwrap().to_string();
-                selector.set_label(name.as_str());
-                loss.replace(Some(loss_fn));
-            }
-        }
+        loss.replace(None);
+        LossWidget::show(value, &name, loss.clone());
+        selector.set_label(match *loss.borrow() {
+            None => "Select loss fn:",
+            Some(_) => &name,
+        });
     });
     (loss_border, loss_selector)
 }
