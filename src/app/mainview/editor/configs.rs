@@ -17,10 +17,14 @@ use pyo3::Python;
 use tch::Device;
 use tch::utils::has_vulkan;
 
-use crate::utils::{
-    AppEvent, BG_COLOR, check_mps_availability, CustomDialog, DEVICES, DRAG_THRESHOLD, HIGHLIGHT_COLOR,
-    LOSS_FUNCTIONS, LossFunction, LossWidget, MENU_BAR_COLOR, MENU_BAR_RATIO, OPTIMIZERS,
+use crate::utils::check_mps_availability;
+use crate::utils::consts::{
+    BG_COLOR, DEVICES, DRAG_THRESHOLD, HIGHLIGHT_COLOR, LOSS_FUNCTIONS, MENU_BAR_COLOR,
+    MENU_BAR_RATIO, OPTIMIZERS,
 };
+use crate::utils::CustomDialog;
+use crate::utils::enums::AppEvent;
+use crate::utils::loss_fn::{LossFunction, LossWidget};
 
 pub(crate) struct ConfingList {
     pub(crate) window: Window,

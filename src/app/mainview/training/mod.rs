@@ -3,7 +3,8 @@ use fltk::button::Button;
 use fltk::prelude::{GroupExt, WidgetBase, WidgetExt};
 use fltk::window::{DoubleWindow, Window};
 
-use crate::utils::{AppEvent, BG_COLOR};
+use crate::utils::consts::BG_COLOR;
+use crate::utils::enums::AppEvent;
 
 pub(crate) struct TrainingView {
     window: DoubleWindow,

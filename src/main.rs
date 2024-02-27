@@ -2,7 +2,7 @@ use crate::app::Application;
 
 mod app;
 pub(crate) mod components;
-mod utils;
+pub(crate) mod utils;
 
 fn main() {
     Application::new(1080, 720).run();

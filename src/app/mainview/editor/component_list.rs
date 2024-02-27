@@ -8,10 +8,11 @@ use fltk::prelude::{GroupExt, WidgetBase, WidgetExt};
 use fltk::tree::{Tree, TreeItem};
 use fltk::window::Window;
 
-use crate::utils::{
-    ACTIVATION_FUNCTIONS, AppEvent, BG_COLOR, DRAG_THRESHOLD, HIGHLIGHT_COLOR, LAYERS,
-    MENU_BAR_COLOR, MENU_BAR_RATIO,
+use crate::utils::consts::{
+    ACTIVATION_FUNCTIONS, BG_COLOR, DRAG_THRESHOLD, HIGHLIGHT_COLOR, LAYERS, MENU_BAR_COLOR,
+    MENU_BAR_RATIO,
 };
+use crate::utils::enums::AppEvent;
 
 pub(crate) struct ComponentList {
     pub(crate) window: Window,

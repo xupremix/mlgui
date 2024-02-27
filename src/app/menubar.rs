@@ -4,7 +4,8 @@ use fltk::menu::{MenuFlag, MenuItem, SysMenuBar, WindowMenuStyle};
 use fltk::prelude::{GroupExt, MenuExt, WidgetExt};
 use fltk::window::Window;
 
-use crate::utils::{AppEvent, AppMode, MENU_BAR_COLOR};
+use crate::utils::consts::MENU_BAR_COLOR;
+use crate::utils::enums::{AppEvent, AppMode};
 
 pub(crate) struct AppMenuBar {
     window: Window,

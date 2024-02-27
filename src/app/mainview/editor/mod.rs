@@ -5,7 +5,8 @@ use fltk::window::{DoubleWindow, Window};
 
 use crate::app::mainview::editor::component_list::ComponentList;
 use crate::app::mainview::editor::configs::ConfingList;
-use crate::utils::{AppEvent, BG_COLOR, COMPONENT_LIST_RATIO, CONFIG_LIST_RATIO};
+use crate::utils::consts::{BG_COLOR, COMPONENT_LIST_RATIO, CONFIG_LIST_RATIO};
+use crate::utils::enums::AppEvent;
 
 mod component_list;
 mod configs;

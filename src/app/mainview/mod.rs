@@ -4,9 +4,7 @@ use fltk::window::Window;
 
 use crate::app::mainview::editor::EditorView;
 use crate::app::mainview::training::TrainingView;
-use crate::utils::{
-    AppEvent, AppMode,
-};
+use crate::utils::enums::{AppEvent, AppMode};
 
 mod editor;
 mod training;

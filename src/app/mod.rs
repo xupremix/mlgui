@@ -4,7 +4,8 @@ use fltk::window::Window;
 
 use crate::app::mainview::MainView;
 use crate::app::menubar::AppMenuBar;
-use crate::utils::{AppEvent, AppMode, MENU_BAR_RATIO, WINDOW_TITLE};
+use crate::utils::consts::{MENU_BAR_RATIO, WINDOW_TITLE};
+use crate::utils::enums::{AppEvent, AppMode};
 
 mod mainview;
 mod menubar;
