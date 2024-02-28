@@ -5,6 +5,7 @@ use fltk::window::{DoubleWindow, Window};
 
 use crate::app::mainview::editor::component_list::ComponentList;
 use crate::app::mainview::editor::configs::ConfingList;
+use crate::app::mainview::editor::playground::Playground;
 use crate::utils::consts::{BG_COLOR, COMPONENT_LIST_RATIO, CONFIG_LIST_RATIO};
 use crate::utils::enums::AppEvent;
 
@@ -24,6 +25,7 @@ impl EditorView {
         window.set_color(BG_COLOR);
 
         // playground
+        Playground::new(p_w, p_h);
 
         // graph display
 
