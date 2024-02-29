@@ -1,7 +1,10 @@
 use std::path::PathBuf;
+use fltk::enums::Event;
+use fltk::enums::FrameType;
+use fltk::frame::Frame;
 
 use fltk::enums::Color;
-use fltk::prelude::{GroupExt, WidgetExt};
+use fltk::prelude::{GroupExt, WidgetBase, WidgetExt};
 use fltk::window::Window;
 use tch::Device;
 
@@ -32,6 +35,42 @@ impl Playground {
     }
 
     pub(crate) fn add_layer(&mut self, layer: LayerType) {
+        let mut component = Frame::default()
+            .with_size(100, 60)
+            .center_of(&self.draw_area);
+        component.set_frame(FrameType::FlatBox);
+        component.set_color(Color::White);
+        let mut inner_component = Frame::default()
+            .with_size(98, 58)
+            .center_of(&component)
+            .with_label(*(layer.clone()));
+        inner_component.set_label_color(Color::White);
+        inner_component.set_frame(FrameType::FlatBox);
+        inner_component.set_color(BG_COLOR);
+        self.draw_area.add(&component);
+        self.draw_area.add(&inner_component);
+        self.draw_area.redraw();
+        let mut set = false;
+        inner_component.handle(move |component, event| {
+            match event {
+                Event::Push if !set => {
+                    set = true;
+                    true
+                },
+                Event::Drag if set => {
+                    let (x, y) = (fltk::app::event_x(),fltk::app::event_y()) ;
+                    component.resize(
+                        component.x() - x,
+                        component.y() - y,
+                        component.w(),
+                        component.h(),
+                    );
+                    eprintln!("X: {}, Y: {}", x, y);
+                    true
+                },
+                _ => false,
+            }
+        });
         self.components.push(NNComponent::Layer {
             layer_type: layer,
             configured: false,
