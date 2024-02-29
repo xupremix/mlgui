@@ -9,3 +9,4 @@ edition = "2021"
 tch = { path = "../../tch-rs" }
 fltk = { version = "1.4.25", features = ["use-ninja"] }
 pyo3 = { version = "0.20.3", features = ["auto-initialize"] }
+strum = { version = "0.26.1", features = ["derive"] }

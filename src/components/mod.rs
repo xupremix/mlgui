@@ -1,20 +1,21 @@
-use crate::components::activation_functions::ActivationFunction;
-use crate::components::layers::Layer;
+use crate::components::activation_functions::ActivationFunctionType;
+use crate::components::layers::LayerType;
 
 pub(crate) mod activation_functions;
 pub(crate) mod layers;
 
-#[derive(Debug, Clone)]
+// head of the network is being kept by the playground
+#[derive(Debug)]
 pub(crate) enum NNComponent {
-    Layer(Layer),
-    ActivationFunction(ActivationFunction),
-}
-
-impl NNComponent {
-    fn connected(&self) -> bool {
-        match self {
-            NNComponent::Layer(l) => l.connected(),
-            NNComponent::ActivationFunction(a) => a.connected(),
-        }
-    }
+    Layer {
+        layer_type: LayerType,
+        configured: bool,
+        observation_space: i64,
+        action_space: i64,
+        next: Option<usize>,
+    },
+    ActivationFunction {
+        fn_type: ActivationFunctionType,
+        next: Option<usize>,
+    },
 }

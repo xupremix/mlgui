@@ -1,24 +1,5 @@
 use fltk::enums::Color;
 
-pub(crate) const LAYERS: [&str; 13] = [
-    "Linear",
-    "LSTM",
-    "GRU",
-    "BatchNorm1D",
-    "BatchNorm2D",
-    "BatchNorm3D",
-    "Conv",
-    "Conv1D",
-    "Conv2D",
-    "Conv3D",
-    "ConvTranspose1D",
-    "ConvTranspose2D",
-    "ConvTranspose3D",
-];
-
-pub(crate) const ACTIVATION_FUNCTIONS: [&str; 5] =
-    ["ReLU", "Leaky ReLU", "Softmax", "Sigmoid", "Tanh"];
-
 pub(crate) const DEVICES: [&str; 4] = ["CPU", "CUDA", "MPS", "VULKAN"];
 pub(crate) const OPTIMIZERS: [&str; 4] = ["SGD", "Adam", "AdamW", "RMSprop"];
 pub(crate) const LOSS_FUNCTIONS: [&str; 7] =

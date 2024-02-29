@@ -64,12 +64,6 @@ impl Application {
                     AppEvent::Help => {
                         eprintln!("Showing help");
                     }
-                    AppEvent::AddLayer(layer) => {
-                        self.main_view.add_layer(layer);
-                    }
-                    AppEvent::AddActivationFunction(activation_fn) => {
-                        self.main_view.add_activation_fn(activation_fn);
-                    }
                 }
             }
         }

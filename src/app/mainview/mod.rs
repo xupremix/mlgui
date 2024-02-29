@@ -27,20 +27,14 @@ impl MainView {
     ) -> Self {
         let window = Window::default().with_pos(p_x, p_y).with_size(p_w, p_h);
 
-        let training_view = TrainingView::new(evt_sender.clone(), p_w, p_h);
-        let editor_view = EditorView::new(evt_sender, p_w, p_h);
+        let training_view = TrainingView::new(evt_sender, p_w, p_h);
+        let editor_view = EditorView::new(p_w, p_h);
         window.end();
         Self {
             window,
             editor_view,
             training_view,
         }
-    }
-    pub(crate) fn add_layer(&self, layer: String) {
-        eprintln!("Adding layer: {}", layer);
-    }
-    pub(crate) fn add_activation_fn(&self, activation_fn: String) {
-        eprintln!("Adding activation fn: {}", activation_fn);
     }
     pub(crate) fn redraw_mode(&mut self, mode: AppMode) {
         match mode {

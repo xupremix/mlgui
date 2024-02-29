@@ -1,18 +1,22 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::str::FromStr;
 use std::time::{Duration, Instant};
 
-use fltk::app::Sender;
 use fltk::enums::{Color, Cursor, Event, Font, FrameType};
 use fltk::frame::Frame;
 use fltk::group::Group;
 use fltk::prelude::{GroupExt, WidgetBase, WidgetExt};
 use fltk::tree::{Tree, TreeItem};
 use fltk::window::Window;
+use strum::IntoEnumIterator;
 
+use crate::app::mainview::editor::playground::Playground;
+use crate::components::activation_functions::ActivationFunctionType;
+use crate::components::layers::LayerType;
 use crate::utils::consts::{
-    ACTIVATION_FUNCTIONS, BG_COLOR, DRAG_THRESHOLD, HIGHLIGHT_COLOR, LAYERS, MENU_BAR_COLOR,
-    MENU_BAR_RATIO,
+    BG_COLOR, DRAG_THRESHOLD, HIGHLIGHT_COLOR, MENU_BAR_COLOR, MENU_BAR_RATIO,
 };
-use crate::utils::enums::AppEvent;
 
 pub(crate) struct ComponentList {
     pub(crate) window: Window,
@@ -23,7 +27,7 @@ pub(crate) struct ComponentList {
 fltk::widget_extends!(ComponentList, Window, window);
 
 impl ComponentList {
-    pub(crate) fn new(evt_sender: Sender<AppEvent>, p_w: i32, p_h: i32) -> Self {
+    pub(crate) fn new(graph: Rc<RefCell<Playground>>, p_w: i32, p_h: i32) -> Self {
         let mut window = Window::default().with_size(p_w, p_h);
         window.set_color(Color::White);
 
@@ -64,10 +68,12 @@ impl ComponentList {
                 if coords == new_coords && instant - last_click < interval {
                     if let Some(item) = tree.find_clicked(true) {
                         let label = item.label().unwrap();
-                        if LAYERS.contains(&label.as_str()) {
-                            evt_sender.send(AppEvent::AddLayer(label));
-                        } else if ACTIVATION_FUNCTIONS.contains(&label.as_str()) {
-                            evt_sender.send(AppEvent::AddActivationFunction(label));
+                        if let Ok(layer) = LayerType::from_str(&label) {
+                            graph.borrow_mut().add_layer(layer);
+                        } else if let Ok(activation_function) =
+                            ActivationFunctionType::from_str(&label)
+                        {
+                            graph.borrow_mut().add_fn(activation_function);
                         }
                     }
                 } else {
@@ -135,9 +141,9 @@ fn activation_functions(tree: &mut Tree) -> Vec<TreeItem> {
         first.set_label_size(15);
         first
     }];
-    ACTIVATION_FUNCTIONS.iter().for_each(|layer| {
+    ActivationFunctionType::iter().for_each(|layer| {
         out.push(
-            tree.add(&format!("Activation Functions/{}", layer))
+            tree.add(&format!("Activation Functions/{}", *layer))
                 .unwrap(),
         )
     });
@@ -158,9 +164,7 @@ fn layers(tree: &mut Tree) -> Vec<TreeItem> {
         first.set_label_size(15);
         first
     }];
-    LAYERS
-        .iter()
-        .for_each(|layer| out.push(tree.add(&format!("Layers/{}", layer)).unwrap()));
+    LayerType::iter().for_each(|layer| out.push(tree.add(&format!("Layers/{}", *layer)).unwrap()));
     for node in out.iter_mut().skip(1) {
         node.set_label_color(Color::White);
         node.set_label_font(Font::Helvetica);

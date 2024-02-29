@@ -3,7 +3,6 @@ use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use fltk::app::Sender;
 use fltk::button::Button;
 use fltk::dialog::{FileDialogType, NativeFileChooser};
 use fltk::enums::{Align, Color, Cursor, Event, Font, FrameType};
@@ -18,6 +17,7 @@ use pyo3::Python;
 use tch::Device;
 use tch::utils::has_vulkan;
 
+use crate::app::mainview::editor::playground::Playground;
 use crate::utils::check_mps_availability;
 use crate::utils::consts::{
     BG_COLOR, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE_STR, DEFAULT_EPOCHS, DEFAULT_EPOCHS_STR,
@@ -25,7 +25,6 @@ use crate::utils::consts::{
     MENU_BAR_COLOR, MENU_BAR_RATIO, OPTIMIZERS,
 };
 use crate::utils::CustomDialog;
-use crate::utils::enums::AppEvent;
 use crate::utils::loss_fn::{LossFunction, LossWidget};
 
 pub(crate) struct ConfingList {
@@ -34,16 +33,13 @@ pub(crate) struct ConfingList {
     pub(crate) device: Rc<RefCell<Option<Device>>>,
     pub(crate) optimizer: Rc<RefCell<Option<String>>>,
     pub(crate) loss_fn: Rc<RefCell<Option<LossFunction>>>,
-    pub(crate) lr: Rc<RefCell<f64>>,
-    pub(crate) batch_size: Rc<RefCell<i64>>,
-    pub(crate) epochs: Rc<RefCell<usize>>,
 }
 
 fltk::widget_extends!(ConfingList, Window, window);
 
 impl ConfingList {
     pub(crate) fn new(
-        evt_sender: Sender<AppEvent>,
+        graph: Rc<RefCell<Playground>>,
         p_x: i32,
         p_y: i32,
         mut p_w: i32,
@@ -163,13 +159,14 @@ impl ConfingList {
                     Color::Red,
                 );
             } else {
-                CustomDialog::show(
-                    220,
-                    40,
-                    "Success",
-                    "Model built successfully",
-                    BG_COLOR,
-                    Color::Green,
+                graph.borrow_mut().build_model(
+                    check_save_path.borrow().as_ref().unwrap().clone(),
+                    check_device.borrow().as_ref().unwrap().clone(),
+                    check_optimizer.borrow().as_ref().unwrap().clone(),
+                    check_loss_fn.borrow().as_ref().unwrap().clone(),
+                    lr.borrow().clone(),
+                    batch_size.borrow().clone(),
+                    epochs.borrow().clone(),
                 );
             }
         });
@@ -261,9 +258,6 @@ impl ConfingList {
             device,
             optimizer,
             loss_fn,
-            lr,
-            batch_size,
-            epochs,
         }
     }
 }
