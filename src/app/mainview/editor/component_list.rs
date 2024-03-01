@@ -14,6 +14,7 @@ use strum::IntoEnumIterator;
 use crate::app::mainview::editor::playground::Playground;
 use crate::components::activation_functions::ActivationFunctionType;
 use crate::components::layers::LayerType;
+use crate::components::NNComponent;
 use crate::utils::consts::{
     BG_COLOR, DRAG_THRESHOLD, HIGHLIGHT_COLOR, MENU_BAR_COLOR, MENU_BAR_RATIO,
 };
@@ -68,12 +69,21 @@ impl ComponentList {
                 if coords == new_coords && instant - last_click < interval {
                     if let Some(item) = tree.find_clicked(true) {
                         let label = item.label().unwrap();
-                        if let Ok(layer) = LayerType::from_str(&label) {
-                            graph.borrow_mut().add_layer(layer);
-                        } else if let Ok(activation_function) =
-                            ActivationFunctionType::from_str(&label)
-                        {
-                            graph.borrow_mut().add_fn(activation_function);
+                        if let Ok(layer_type) = LayerType::from_str(&label) {
+                            graph.borrow_mut().add_component(NNComponent::Layer {
+                                layer_type,
+                                configured: false,
+                                observation_space: 0,
+                                action_space: 0,
+                                next: None,
+                            });
+                        } else if let Ok(fn_type) = ActivationFunctionType::from_str(&label) {
+                            graph
+                                .borrow_mut()
+                                .add_component(NNComponent::ActivationFunction {
+                                    fn_type,
+                                    next: None,
+                                });
                         }
                     }
                 } else {

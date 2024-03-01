@@ -1,7 +1,7 @@
 use fltk::enums::Color;
 
 pub(crate) const BASE_COMPONENT_HEIGHT: i32 = 45;
-pub(crate) const BASE_COMPONENT_WIDTH: i32 = 90;
+pub(crate) const BASE_COMPONENT_WIDTH: i32 = 100;
 pub(crate) const DEVICES: [&str; 4] = ["CPU", "CUDA", "MPS", "VULKAN"];
 pub(crate) const OPTIMIZERS: [&str; 4] = ["SGD", "Adam", "AdamW", "RMSprop"];
 pub(crate) const LOSS_FUNCTIONS: [&str; 7] =

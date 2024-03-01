@@ -161,12 +161,12 @@ impl ConfingList {
             } else {
                 graph.borrow_mut().build_model(
                     check_save_path.borrow().as_ref().unwrap().clone(),
-                    check_device.borrow().as_ref().unwrap().clone(),
+                    *check_device.borrow().as_ref().unwrap(),
                     check_optimizer.borrow().as_ref().unwrap().clone(),
                     check_loss_fn.borrow().as_ref().unwrap().clone(),
-                    lr.borrow().clone(),
-                    batch_size.borrow().clone(),
-                    epochs.borrow().clone(),
+                    *lr.borrow(),
+                    *batch_size.borrow(),
+                    *epochs.borrow(),
                 );
             }
         });
