@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use fltk::app::MouseButton;
-use fltk::enums::{Align, Color};
 use fltk::enums::Event;
 use fltk::enums::FrameType;
+use fltk::enums::{Align, Color};
 use fltk::frame::Frame;
 use fltk::group::Group;
 use fltk::image::{PngImage, SvgImage};
@@ -15,8 +15,8 @@ use tch::Device;
 
 use crate::components::NNComponent;
 use crate::utils::consts::{BASE_COMPONENT_HEIGHT, BASE_COMPONENT_WIDTH, BG_COLOR};
-use crate::utils::CustomDialog;
 use crate::utils::loss_fn::LossFunction;
+use crate::utils::CustomDialog;
 
 pub(crate) struct Playground {
     draw_area: Rc<RefCell<Window>>,
@@ -38,13 +38,13 @@ impl Playground {
             first_component: Rc::new(RefCell::new(None)),
         }
     }
+
     pub(crate) fn add_component(&mut self, nn_comp: NNComponent) {
         let i = self.components.borrow().len();
         let draw_area = self.draw_area.clone();
         let set_first_ref = self.first.clone();
         let first_component = self.first_component.clone();
         let elems = self.components.clone();
-        let config_elems = self.components.clone();
         let label = *nn_comp;
         let mut g = Group::default()
             .with_size(
@@ -75,7 +75,6 @@ impl Playground {
                 img.h(),
             );
         });
-
         g.end();
         draw_area.borrow_mut().add(&g);
         draw_area.borrow_mut().redraw();
@@ -87,7 +86,7 @@ impl Playground {
             .borrow_mut()
             .as_mut()
             .unwrap()
-            .handle(move |inner_component, event| match event {
+            .handle(move |_, event| match event {
                 Event::Push => {
                     match fltk::app::event_mouse_button() {
                         MouseButton::Left => {
@@ -138,7 +137,7 @@ impl Playground {
                             let c = draw_area.clone();
                             let set_first_ref = set_first_ref.clone();
                             let set_first_ref_config = set_first_ref.clone();
-                            set_first_frame.handle(move |frame, evt| match evt {
+                            set_first_frame.handle(move |_, evt| match evt {
                                 Event::Push => {
                                     let inner_elem = mv_elems.clone();
                                     let prev_i = *set_first_ref.borrow();
@@ -229,13 +228,12 @@ impl Playground {
                                 }
                                 _ => false,
                             });
-                            config_frame.handle(move |frame, evt| match evt {
+                            config_frame.handle(move |_, evt| match evt {
                                 Event::Push => {
-                                    match config_elems.borrow_mut().get_mut(i).unwrap() {
-                                        NNComponent::Layer { configured, .. } => {
-                                            *configured = true;
-                                        }
-                                        NNComponent::ActivationFunction { .. } => {}
+                                    if let NNComponent::Layer { configured, .. } =
+                                        config_elems.borrow_mut().get_mut(i).unwrap()
+                                    {
+                                        *configured = true;
                                     }
                                     let first_ref = set_first_ref_config.clone();
                                     let config_elems = config_elems.clone();
@@ -291,7 +289,6 @@ impl Playground {
                                 }
                                 _ => false,
                             });
-
                             draw_area.borrow_mut().add(&group);
                             draw_area.borrow_mut().redraw();
                         }

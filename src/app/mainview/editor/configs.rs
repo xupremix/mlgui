@@ -14,8 +14,8 @@ use fltk::prelude::{GroupExt, InputExt, WidgetBase};
 use fltk::prelude::{MenuExt, WidgetExt};
 use fltk::window::Window;
 use pyo3::Python;
-use tch::Device;
 use tch::utils::has_vulkan;
+use tch::Device;
 
 use crate::app::mainview::editor::playground::Playground;
 use crate::utils::check_mps_availability;
@@ -24,8 +24,8 @@ use crate::utils::consts::{
     DEFAULT_LR, DEFAULT_LR_STR, DEVICES, DRAG_THRESHOLD, HIGHLIGHT_COLOR, LOSS_FUNCTIONS,
     MENU_BAR_COLOR, MENU_BAR_RATIO, OPTIMIZERS,
 };
-use crate::utils::CustomDialog;
 use crate::utils::loss_fn::{LossFunction, LossWidget};
+use crate::utils::CustomDialog;
 
 pub(crate) struct ConfingList {
     pub(crate) window: Window,
